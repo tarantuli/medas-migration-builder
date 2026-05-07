@@ -1,8 +1,8 @@
 {
-  "name": "morphp/medas-placeholder",
-  "description": "Medas placeholder",
+  "name": "morphp/medas-migration-builder",
+  "description": "Medas migration builder",
   "keywords": [
-    "placeholder"
+    "storage"
   ],
   "authors": [
     {
@@ -13,6 +13,7 @@
   "type": "library",
   "require": {
     "morphp/medas-core": "^3",
+    "morphp/medas-storage-manager": "^4",
     "php": "^8.4"
   },
   "require-dev": {
@@ -22,12 +23,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Medas\\Placeholder\\": "src/"
+      "Medas\\MigrationBuilder\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Medas\\PlaceholderTest\\": "tests/"
+      "Medas\\MigrationBuilderTest\\": "tests/"
     }
   }
 }

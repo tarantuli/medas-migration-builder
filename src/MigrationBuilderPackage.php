@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Medas\Placeholder;
+namespace Medas\MigrationBuilder;
 
 use Medas\Core\{AsSingleton, BasePackage};
 
-class PlaceholderPackage extends BasePackage
+class MigrationBuilderPackage extends BasePackage
 {
     use AsSingleton;
 

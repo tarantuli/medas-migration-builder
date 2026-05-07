@@ -6,11 +6,10 @@ namespace Medas\MigrationBuilder\OriginalClassStorageStrategyActionBuilder;
 
 use Medas\Core\Attributes\{ConfigValue, Service};
 use Medas\EntityManager\Attributes\Relations\Action;
-use Medas\MigrationBuilder\Structure\Blueprint;
+use Medas\MigrationBuilder\{MigrationBuilderManager, Structure\Blueprint};
 use Medas\StorageManager\ConfigOptions\OriginalClassStorage\LinkingStore\StoreNamingStrategy;
 use Medas\StorageManager\Inheritance\LinkingStore\NamingStrategy;
 use Medas\StorageManager\Interfaces\Storage;
-use Medas\StorageManager\StorageManager;
 use Medas\StorageManager\Type;
 use Medas\StorageManager\UnitOfWork\ActionSet;
 
@@ -19,8 +18,8 @@ readonly class ForLinkingStore
 {
     public function __construct(
         #[ConfigValue(StoreNamingStrategy::class)]
-        private NamingStrategy $namingStrategy,
-        private StorageManager $storageManager,
+        private NamingStrategy          $namingStrategy,
+        private MigrationBuilderManager $migrationBuilderManager,
     )
     {
     }
@@ -56,9 +55,7 @@ readonly class ForLinkingStore
             ->addIndex($primaryIndex)
             ->addForeignKey($idForeignKey);
 
-        return $this->storageManager->controller($storage)->migrationBuilder()->buildActions(
-            $storage,
-            $linkStoreBlueprint
-        );
+        return $this->migrationBuilderManager->for($storage)
+            ->buildActions($storage, $linkStoreBlueprint);
     }
 }

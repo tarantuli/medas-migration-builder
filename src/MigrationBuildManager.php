@@ -20,6 +20,7 @@ readonly class MigrationBuildManager
     public function __construct(
         private DirectoryCreator                $directoryCreator,
         private FileLoader                      $fileLoader,
+        private MigrationBuilderManager         $migrationBuilderManager,
         private PhpClassBuilder                 $phpClassBuilder,
         private StorageManager                  $storageManager,
         private StoredEntityDeterminator        $storedEntityDeterminator,
@@ -121,10 +122,11 @@ readonly class MigrationBuildManager
 
     private function processEntity(Job $job, string $className, Entity $entity): void
     {
+        $storage = $this->storageManager->byName($entity->storage);
         $expectedStructure = $this->entityStructureFinder->find($className);
-        $needed = $this->storageManager->controller($entity->storage)->migrationBuilder()
+        $needed = $this->migrationBuilderManager->for($storage)
             ->build(
-                $this->storageManager->byName($entity->storage),
+                $storage,
                 $expectedStructure,
                 $job->migrateMethod,
                 $job->undoMethod,

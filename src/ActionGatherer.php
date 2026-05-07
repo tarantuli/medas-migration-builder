@@ -13,6 +13,7 @@ readonly class ActionGatherer
 {
     public function __construct(
         private FileLoader                      $fileLoader,
+        private MigrationBuilderManager         $migrationBuilderManager,
         private StorageManager                  $storageManager,
         private StoredEntityDeterminator        $storedEntityDeterminator,
         private Structure\EntityStructureFinder $entityStructureFinder,
@@ -43,12 +44,10 @@ readonly class ActionGatherer
 
     private function processEntity(ActionSet $actions, string $className, Entity $entity): void
     {
+        $storage = $this->storageManager->byName($entity->storage);
         $expectedStructure = $this->entityStructureFinder->find($className);
-        $newActions = $this->storageManager->controller($entity->storage)->migrationBuilder()
-            ->buildActions(
-                $this->storageManager->byName($entity->storage),
-                $expectedStructure,
-            );
+        $newActions = $this->migrationBuilderManager->for($storage)
+            ->buildActions($storage, $expectedStructure);
 
         foreach ($newActions as $action) {
             $actions[] = $action;

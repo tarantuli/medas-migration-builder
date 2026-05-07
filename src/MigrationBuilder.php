@@ -9,6 +9,8 @@ use Medas\StorageManager\{Interfaces\Storage, UnitOfWork\ActionSet};
 
 interface MigrationBuilder
 {
+    public function handles(Storage $storage): bool;
+
     public function build(
         Storage             $storage,
         Structure\Blueprint $expectedStructure,

@@ -11,7 +11,8 @@ use Medas\StorageManager\{Interfaces\Store, StorageManager, Type};
 readonly class MigrationStoreBuilder
 {
     public function __construct(
-        private StorageManager $storageManager,
+        private MigrationBuilderManager $migrationBuilderManager,
+        private StorageManager          $storageManager,
     )
     {
     }
@@ -28,10 +29,10 @@ readonly class MigrationStoreBuilder
         $blueprint->addField($datetimeField);
         $blueprint->addIndex(new Structure\Blueprint\Index([$migrationField]));
 
-        $storageController = $this->storageManager->controller();
-        $actions = $storageController->actionBuilders()->createStore()
-            ->build($store->storage(), $blueprint);
+        $storage = $store->storage();
+        $actions = $this->migrationBuilderManager->for($storage)
+            ->buildActions($storage, $blueprint);
 
-        $storageController->actionExecutor()->executeSet($actions);
+        $this->storageManager->controller($storage)->actionExecutor()->executeSet($actions);
     }
 }

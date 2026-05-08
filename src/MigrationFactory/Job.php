@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Medas\MigrationBuilder;
+namespace Medas\MigrationBuilder\MigrationFactory;
 
 use Medas\FileBuilder\PhpClass\{MethodDefinition, PhpClassDefinition};
 

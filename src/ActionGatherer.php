@@ -12,30 +12,45 @@ use Medas\StorageManager\{StorageManager, UnitOfWork\ActionSet};
 readonly class ActionGatherer
 {
     public function __construct(
-        private FileLoader                      $fileLoader,
-        private MigrationBuilderManager         $migrationBuilderManager,
-        private StorageManager                  $storageManager,
-        private StoredEntityDeterminator        $storedEntityDeterminator,
-        private Structure\EntityStructureFinder $entityStructureFinder,
+        private BuilderResolver                           $builderResolver,
+        private FileLoader                                $fileLoader,
+        private MigrationFactory\StoredEntityDeterminator $storedEntityDeterminator,
+        private StorageManager                            $storageManager,
+        private Structure\EntityBlueprintBuilder          $entityBlueprintBuilder,
     )
     {
     }
 
-    public function gather(array $directories): ActionSet
+    /**
+     * Loads all PHP files in the given directories and returns all stored entity
+     * classes found in them, keyed by class name.
+     *
+     * @return array<string, Entity>
+     */
+    public function scan(array $directories): array
     {
-        $actions = new ActionSet();
-
         foreach ($directories as &$directory) {
             $directory = realpath($directory);
 
             $this->fileLoader->load($directory);
         }
 
-        foreach (get_declared_classes() as $className) {
-            if (null === $entity = $this->storedEntityDeterminator->determine($className, $directories)) {
-                continue;
-            }
+        $entities = [];
 
+        foreach (get_declared_classes() as $className) {
+            if ($entity = $this->storedEntityDeterminator->determine($className, $directories)) {
+                $entities[$className] = $entity;
+            }
+        }
+
+        return $entities;
+    }
+
+    public function gather(array $directories): ActionSet
+    {
+        $actions = new ActionSet();
+
+        foreach ($this->scan($directories) as $className => $entity) {
             $this->processEntity($actions, $className, $entity);
         }
 
@@ -45,8 +60,8 @@ readonly class ActionGatherer
     private function processEntity(ActionSet $actions, string $className, Entity $entity): void
     {
         $storage = $this->storageManager->byName($entity->storage);
-        $expectedStructure = $this->entityStructureFinder->find($className);
-        $newActions = $this->migrationBuilderManager->for($storage)
+        $expectedStructure = $this->entityBlueprintBuilder->find($className);
+        $newActions = $this->builderResolver->for($storage)
             ->buildActions($storage, $expectedStructure);
 
         foreach ($newActions as $action) {

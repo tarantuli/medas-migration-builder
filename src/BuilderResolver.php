@@ -4,19 +4,31 @@ declare(strict_types=1);
 
 namespace Medas\MigrationBuilder;
 
+use Medas\Cache\MemoryCache;
 use Medas\Core\{Attributes\Service, Interfaces\ImplementorFinder, Interfaces\ServiceManager};
 use Medas\StorageManager\Interfaces\Storage;
 
 #[Service]
-readonly class MigrationBuilderManager
+readonly class BuilderResolver
 {
+    private MemoryCache $cache;
+
     public function __construct(
         private ServiceManager $serviceManager,
     )
     {
+        $this->cache = new MemoryCache();
     }
 
     public function for(Storage $storage): MigrationBuilder
+    {
+        return $this->cache->get(
+            __CLASS__ . $storage->name(),
+            fn($storage) => $this->find($storage)
+        );
+    }
+
+    private function find(Storage $storage): MigrationBuilder
     {
         foreach ($this->serviceManager->resolve(ImplementorFinder::class)->find(MigrationBuilder::class) as $builder) {
             if ($builder->handles($storage)) {

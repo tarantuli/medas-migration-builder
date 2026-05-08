@@ -6,7 +6,7 @@ namespace Medas\MigrationBuilder\Structure\TypeHandlers;
 
 use Medas\Core\{Attributes\Service, Interfaces\ServiceManager, Types\Relation};
 use Medas\EntityManager\{MetaData\Property, MetaDataManager};
-use Medas\MigrationBuilder\Structure\{Blueprint\ForeignKey, TypeHandlerFinder};
+use Medas\MigrationBuilder\Structure\{Blueprint\ForeignKey, TypeHandlerResolver};
 use Medas\StorageManager\Type;
 
 #[Service]
@@ -36,7 +36,7 @@ readonly class RelationHandler extends BaseHandler
         $idProperty = $this->getIdProperty($entity);
 
         // We can't inject it in the constructor due to circular dependencies
-        $typeHandlerFinder = $this->serviceManager->resolve(TypeHandlerFinder::class);
+        $typeHandlerFinder = $this->serviceManager->resolve(TypeHandlerResolver::class);
 
         return $typeHandlerFinder->for($idProperty->type)->fieldType($idProperty);
     }

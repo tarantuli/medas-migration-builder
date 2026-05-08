@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Medas\MigrationBuilder;
 
 use Medas\Core\{AsSingleton, BasePackage};
+use Medas\FileBuilder\FileBuilderPackage;
+use Medas\StorageManager\StorageManagerPackage;
 
 class MigrationBuilderPackage extends BasePackage
 {
@@ -12,7 +14,10 @@ class MigrationBuilderPackage extends BasePackage
 
     public function dependencies(): array
     {
-        return [];
+        return [
+            FileBuilderPackage::instance(),
+            StorageManagerPackage::instance(),
+        ];
     }
 
     public function sourceDirectory(): string

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Medas\MigrationBuilder\OriginalClassStorageStrategyActionBuilder;
+namespace Medas\MigrationBuilder\OriginalClassStorageActionBuilders;
 
 use Medas\Core\Attributes\{ConfigValue, Service};
 use Medas\EntityManager\Attributes\Relations\Action;
-use Medas\MigrationBuilder\{MigrationBuilderManager, Structure\Blueprint};
+use Medas\MigrationBuilder\{BuilderResolver, Structure\Blueprint};
 use Medas\StorageManager\ConfigOptions\OriginalClassStorage\LinkingStore\StoreNamingStrategy;
 use Medas\StorageManager\Inheritance\LinkingStore\NamingStrategy;
 use Medas\StorageManager\Interfaces\Storage;
@@ -14,12 +14,12 @@ use Medas\StorageManager\Type;
 use Medas\StorageManager\UnitOfWork\ActionSet;
 
 #[Service]
-readonly class ForLinkingStore
+readonly class LinkingStoreActionBuilder implements ActionBuilderInterface
 {
     public function __construct(
         #[ConfigValue(StoreNamingStrategy::class)]
-        private NamingStrategy          $namingStrategy,
-        private MigrationBuilderManager $migrationBuilderManager,
+        private NamingStrategy  $namingStrategy,
+        private BuilderResolver $migrationBuilderManager,
     )
     {
     }

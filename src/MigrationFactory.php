@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Medas\MigrationBuilder;
 
-use Medas\Core\{Attributes\Service, Interfaces\DirectoryCreator, Interfaces\FileLoader};
+use Medas\Core\{Attributes\Service, Interfaces\DirectoryCreator};
 use Medas\EntityManager\Attributes\Entity;
 use Medas\FileBuilder\{
     PhpClass\MethodDefinition,
@@ -15,21 +15,20 @@ use Medas\FileBuilder\{
 use Medas\StorageManager\{Migrations\Migration, StorageManager, UnitOfWork\UnitOfWork};
 
 #[Service]
-readonly class MigrationBuildManager
+readonly class MigrationFactory
 {
     public function __construct(
-        private DirectoryCreator                $directoryCreator,
-        private FileLoader                      $fileLoader,
-        private MigrationBuilderManager         $migrationBuilderManager,
-        private PhpClassBuilder                 $phpClassBuilder,
-        private StorageManager                  $storageManager,
-        private StoredEntityDeterminator        $storedEntityDeterminator,
-        private Structure\EntityStructureFinder $entityStructureFinder,
+        private ActionGatherer                   $actionGatherer,
+        private BuilderResolver                  $builderResolver,
+        private DirectoryCreator                 $directoryCreator,
+        private PhpClassBuilder                  $phpClassBuilder,
+        private StorageManager                   $storageManager,
+        private Structure\EntityBlueprintBuilder $entityBlueprintBuilder,
     )
     {
     }
 
-    public function createMigration(Settings $settings): string|null
+    public function createMigration(MigrationFactory\Settings $settings): string|null
     {
         $job = $this->createMigrationClassCode($settings);
 
@@ -49,9 +48,9 @@ readonly class MigrationBuildManager
         return null;
     }
 
-    public function createMigrationClassCode(Settings $settings): Job
+    public function createMigrationClassCode(MigrationFactory\Settings $settings): MigrationFactory\Job
     {
-        $job = new Job($settings);
+        $job = new MigrationFactory\Job($settings);
 
         foreach ($job->settings->sourceDirectories as $i => $directory) {
             $job->settings->sourceDirectories[$i] = realpath($directory);
@@ -68,7 +67,7 @@ readonly class MigrationBuildManager
         return $job;
     }
 
-    private function initializeClass(Job $job): void
+    private function initializeClass(MigrationFactory\Job $job): void
     {
         $now = new \DateTime()->format('YmdHisu');
         $job->className = 'Migration' . $now;
@@ -76,7 +75,7 @@ readonly class MigrationBuildManager
         $job->migrationClass->implements[] = Migration::class;
     }
 
-    private function initializeMethods(Job $job): void
+    private function initializeMethods(MigrationFactory\Job $job): void
     {
         $this->initializeMigrateMethod($job);
         $this->initializeUndoMethod($job);
@@ -84,7 +83,7 @@ readonly class MigrationBuildManager
         $job->migrationClass->methods = [$job->migrateMethod, $job->undoMethod];
     }
 
-    private function initializeMigrateMethod(Job $job): void
+    private function initializeMigrateMethod(MigrationFactory\Job $job): void
     {
         $job->migrateMethod = new MethodDefinition('migrate');
         $job->migrateMethod->parameters = [new ParameterDefinition(UnitOfWork::class, 'unitOfWork')];
@@ -92,7 +91,7 @@ readonly class MigrationBuildManager
         $job->migrateMethod->body = '';
     }
 
-    private function initializeUndoMethod(Job $job): void
+    private function initializeUndoMethod(MigrationFactory\Job $job): void
     {
         $job->undoMethod = new MethodDefinition('undo');
         $job->undoMethod->parameters = [new ParameterDefinition(UnitOfWork::class, 'unitOfWork')];
@@ -100,31 +99,20 @@ readonly class MigrationBuildManager
         $job->undoMethod->body = '';
     }
 
-    private function processEntities(Job $job): void
+    private function processEntities(MigrationFactory\Job $job): void
     {
         $job->migrationNeeded = false;
 
-        foreach ($job->settings->sourceDirectories as $directory) {
-            $this->fileLoader->load($directory);
-        }
-
-        foreach (get_declared_classes() as $className) {
-            if (null === $entity = $this->storedEntityDeterminator->determine(
-                $className,
-                $job->settings->sourceDirectories
-            )) {
-                continue;
-            }
-
+        foreach ($this->actionGatherer->scan($job->settings->sourceDirectories) as $className => $entity) {
             $this->processEntity($job, $className, $entity);
         }
     }
 
-    private function processEntity(Job $job, string $className, Entity $entity): void
+    private function processEntity(MigrationFactory\Job $job, string $className, Entity $entity): void
     {
         $storage = $this->storageManager->byName($entity->storage);
-        $expectedStructure = $this->entityStructureFinder->find($className);
-        $needed = $this->migrationBuilderManager->for($storage)
+        $expectedStructure = $this->entityBlueprintBuilder->find($className);
+        $needed = $this->builderResolver->for($storage)
             ->build(
                 $storage,
                 $expectedStructure,

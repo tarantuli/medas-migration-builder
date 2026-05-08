@@ -16,7 +16,7 @@ use Medas\StorageManager\{
 readonly class OriginalClassStorageStrategyActionBuilder
 {
     public function __construct(
-        private OriginalClassStorageStrategyActionBuilder\ForLinkingStore $forLinkingStore,
+        private OriginalClassStorageActionBuilders\LinkingStoreActionBuilder $forLinkingStore,
     )
     {
     }
@@ -27,10 +27,11 @@ readonly class OriginalClassStorageStrategyActionBuilder
         Storage                      $storage
     ): ActionSet
     {
+        /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ($strategy instanceof LinkingStore) {
             return $this->forLinkingStore->buildStoreActions($blueprint, $storage);
         }
 
-        throw new \RuntimeException('Unsupported strategy');
+        throw new Exceptions\UnsupportedStrategy($strategy);
     }
 }

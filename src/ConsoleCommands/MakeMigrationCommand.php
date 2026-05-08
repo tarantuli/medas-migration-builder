@@ -16,7 +16,7 @@ use Medas\Console\{
 use Medas\ConsolePrinter\ConsolePrinter;
 use Medas\Core\{Attributes\Service, Interfaces\ImplementorFinder, Interfaces\ServiceManager};
 use Medas\EntityManager\ConfigOptions\EntityDirectories;
-use Medas\MigrationBuilder\{MigrationBuildManager, Settings};
+use Medas\MigrationBuilder\{MigrationFactory, MigrationFactory\Settings};
 use Medas\StorageManager\{ConfigOptions\MigrationDirectory, Interfaces\PackageEntities};
 
 #[Service]
@@ -25,9 +25,9 @@ readonly class MakeMigrationCommand extends BaseConsoleCommand
     public function __construct(
         private ConsolePrinter        $consolePrinter,
         private EntityDirectories     $entityDirectories,
-        private MigrationBuildManager $migrationBuildManager,
         private MigrationBuilderGroup $group,
         private MigrationDirectory    $migrationDirectory,
+        private MigrationFactory      $migrationBuildManager,
         private OptionController      $optionController,
         private ServiceManager        $serviceManager,
     )

@@ -19,7 +19,7 @@ use Medas\Core\{
 use Medas\StorageManager\Exceptions\{UnhandledType, UnhandledTypeString};
 
 #[Service]
-readonly class TypeHandlerFinder
+readonly class TypeHandlerResolver
 {
     public function __construct(
         private TypeHandlers\BinaryHandler     $binaryHandler,

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Medas\MigrationBuilder\Structure\EntityStructureFinder;
+namespace Medas\MigrationBuilder\Structure\EntityBlueprintBuilder;
 
 use Medas\EntityManager\MetaData;
 use Medas\MigrationBuilder\Structure\Blueprint;

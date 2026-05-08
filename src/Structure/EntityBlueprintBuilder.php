@@ -22,14 +22,14 @@ use Medas\StorageManager\ConfigOptions\TypeDefaults\DefaultMaxIntegerValue;
 use Medas\StorageManager\Type as StoraType;
 
 #[Service]
-readonly class EntityStructureFinder
+readonly class EntityBlueprintBuilder
 {
     public function __construct(
         private CacheManager                 $cacheManager,
         private MetaDataManager              $metaDataManager,
         private ParentStoreFinder            $parentStoreFinder,
         private ServiceManager               $serviceManager,
-        private TypeHandlerFinder            $typeHandlerFinder,
+        private TypeHandlerResolver          $typeHandlerFinder,
         private TypeHandlers\EnumHandler     $enumHandler,
         private TypeHandlers\RelationHandler $relationHandler,
 
@@ -49,7 +49,7 @@ readonly class EntityStructureFinder
 
     private function compile(string $className): Blueprint
     {
-        $job = new EntityStructureFinder\Job(
+        $job = new EntityBlueprintBuilder\Job(
             $this->metaDataManager->get($className),
             new Blueprint()
         );
@@ -64,7 +64,7 @@ readonly class EntityStructureFinder
         return $job->blueprint;
     }
 
-    private function findName(EntityStructureFinder\Job $job): void
+    private function findName(EntityBlueprintBuilder\Job $job): void
     {
         if ($job->metaData->entity->store === null) {
             return;
@@ -74,7 +74,7 @@ readonly class EntityStructureFinder
         $job->blueprint->parent = $job->metaData->inheritance->parent;
     }
 
-    private function findInheritance(EntityStructureFinder\Job $job): void
+    private function findInheritance(EntityBlueprintBuilder\Job $job): void
     {
         if ($job->blueprint->storeOriginalClass = $job->metaData->inheritance->storeOriginalClass) {
             $job->blueprint->storeRequestingOriginalClassStorage
@@ -82,7 +82,7 @@ readonly class EntityStructureFinder
         }
     }
 
-    private function findFields(EntityStructureFinder\Job $job): void
+    private function findFields(EntityBlueprintBuilder\Job $job): void
     {
         $parents = $this->parentStoreFinder->find($job->metaData);
 
@@ -91,7 +91,7 @@ readonly class EntityStructureFinder
         }
     }
 
-    private function findPrimaryKey(EntityStructureFinder\Job $job): void
+    private function findPrimaryKey(EntityBlueprintBuilder\Job $job): void
     {
         $index = new Blueprint\Index([], true);
 
@@ -100,7 +100,7 @@ readonly class EntityStructureFinder
         $job->blueprint->addIndex($index);
     }
 
-    private function findKeys(EntityStructureFinder\Job $job): void
+    private function findKeys(EntityBlueprintBuilder\Job $job): void
     {
         foreach ($job->metaData->properties as $property) {
             if (!$property->isUnique || $property->isIndex) {
@@ -119,7 +119,7 @@ readonly class EntityStructureFinder
         }
     }
 
-    private function addIndex(EntityStructureFinder\Job $job, mixed $propertyNames, bool $isUnique): void
+    private function addIndex(EntityBlueprintBuilder\Job $job, mixed $propertyNames, bool $isUnique): void
     {
         $index = new Blueprint\Index([], false, $isUnique);
 
@@ -130,7 +130,7 @@ readonly class EntityStructureFinder
         $job->blueprint->addIndex($index);
     }
 
-    private function findForeignKeys(EntityStructureFinder\Job $job): void
+    private function findForeignKeys(EntityBlueprintBuilder\Job $job): void
     {
         foreach ($job->metaData->properties as $property) {
             $handler = $this->typeHandlerFinder->for($property->type);

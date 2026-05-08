@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace Medas\MigrationBuilder;
 
 use Medas\Core\Attributes\Service;
-use Medas\StorageManager\{Interfaces\Store, StorageManager, Type};
+use Medas\StorageManager\Interfaces\{
+    Builders\MigrationStoreBuilder as MigrationStoreBuilderInterface,
+    Store
+};
+use Medas\StorageManager\StorageManager;
+use Medas\StorageManager\Type;
 
 #[Service]
-readonly class MigrationStoreBuilder
+readonly class MigrationStoreBuilder implements MigrationStoreBuilderInterface
 {
     public function __construct(
-        private MigrationBuilderManager $migrationBuilderManager,
-        private StorageManager          $storageManager,
+        private BuilderResolver $migrationBuilderManager,
+        private StorageManager  $storageManager,
     )
     {
     }

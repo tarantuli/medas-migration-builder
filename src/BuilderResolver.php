@@ -22,10 +22,7 @@ readonly class BuilderResolver
 
     public function for(Storage $storage): MigrationBuilder
     {
-        return $this->cache->get(
-            __CLASS__ . $storage->name(),
-            fn($storage) => $this->find($storage)
-        );
+        return $this->cache->get(__CLASS__ . $storage->name(), fn() => $this->find($storage));
     }
 
     private function find(Storage $storage): MigrationBuilder

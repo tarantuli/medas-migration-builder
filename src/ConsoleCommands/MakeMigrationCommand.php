@@ -14,10 +14,15 @@ use Medas\Console\{
     Text
 };
 use Medas\ConsolePrinter\ConsolePrinter;
-use Medas\Core\{Attributes\Service, Interfaces\ImplementorFinder, Interfaces\ServiceManager};
+use Medas\Core\{
+    Attributes\Service,
+    Interfaces\ImplementorFinder,
+    Interfaces\PackageEntities,
+    Interfaces\ServiceManager
+};
 use Medas\EntityManager\ConfigOptions\EntityDirectories;
 use Medas\MigrationBuilder\{MigrationFactory, MigrationFactory\Settings};
-use Medas\StorageManager\{ConfigOptions\MigrationDirectory, Interfaces\PackageEntities};
+use Medas\StorageManager\ConfigOptions\MigrationDirectory;
 
 #[Service]
 readonly class MakeMigrationCommand extends BaseConsoleCommand
@@ -70,10 +75,13 @@ readonly class MakeMigrationCommand extends BaseConsoleCommand
             $settings->ignoreExistingStorage = true;
         }
 
-        foreach ($this->serviceManager->resolve(ImplementorFinder::class)->find(PackageEntities::class) as $packageEntities) {
+        $packagesDefiningEntities
+            = $this->serviceManager->resolve(ImplementorFinder::class)->find(PackageEntities::class);
+
+        foreach ($packagesDefiningEntities as $packageDefiningEntities) {
             $settings->sourceDirectories = array_merge(
                 $settings->sourceDirectories,
-                $packageEntities->directories()
+                $packageDefiningEntities->directories()
             );
         }
 

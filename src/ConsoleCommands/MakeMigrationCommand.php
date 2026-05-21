@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace Medas\MigrationBuilder\ConsoleCommands;
 
-use Medas\ConfigOptions\OptionController;
-use Medas\Console\{
-    Commands\BaseConsoleCommand,
+use Medas\Console\{Commands\BaseConsoleCommand,
     Commands\CommandInput,
     Commands\ConsoleCommandGroup,
     Commands\Option,
-    Formats\Color,
-    Text
-};
-use Medas\ConsolePrinter\ConsolePrinter;
-use Medas\Core\{
+    Formats\SafeColor,
+    Printer,
+    Text};
+use Medas\Core\{Attributes\ConfigValue,
     Attributes\Service,
     Interfaces\ImplementorFinder,
     Interfaces\PackageEntities,
-    Interfaces\ServiceManager
-};
+    Interfaces\ServiceManager};
 use Medas\EntityManager\ConfigOptions\EntityDirectories;
 use Medas\MigrationBuilder\{MigrationFactory, MigrationFactory\Settings};
 use Medas\StorageManager\ConfigOptions\MigrationDirectory;
@@ -28,12 +24,13 @@ use Medas\StorageManager\ConfigOptions\MigrationDirectory;
 readonly class MakeMigrationCommand extends BaseConsoleCommand
 {
     public function __construct(
-        private ConsolePrinter        $consolePrinter,
-        private EntityDirectories     $entityDirectories,
+        private Printer        $consolePrinter,
+        #[ConfigValue(EntityDirectories::class)]
+        private array     $entityDirectories,
         private MigrationBuilderGroup $group,
-        private MigrationDirectory    $migrationDirectory,
+        #[ConfigValue(MigrationDirectory::class)    ]
+        private string    $migrationDirectory,
         private MigrationFactory      $migrationBuildManager,
-        private OptionController      $optionController,
         private ServiceManager        $serviceManager,
     )
     {
@@ -67,8 +64,8 @@ readonly class MakeMigrationCommand extends BaseConsoleCommand
     public function process(CommandInput $input): void
     {
         $settings = new Settings(
-            $this->optionController->getValue($this->entityDirectories),
-            $this->optionController->getValue($this->migrationDirectory)
+            $this->entityDirectories,
+            $this->migrationDirectory
         );
 
         if ($input->hasOption('clean')) {
@@ -92,8 +89,8 @@ readonly class MakeMigrationCommand extends BaseConsoleCommand
         $filePath
             ? $this->consolePrinter->print(
                 new Text('created migration file '),
-                new Text($filePath, Color::LightYellow)
+                new Text($filePath, SafeColor::LightYellow)
             )
-            : $this->consolePrinter->print(new Text('no need to create a migration file', Color::LightGray));
+            : $this->consolePrinter->print(new Text('no need to create a migration file', SafeColor::LightGray));
     }
 }

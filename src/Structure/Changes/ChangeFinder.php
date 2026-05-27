@@ -92,7 +92,10 @@ readonly class ChangeFinder
                 }
             }
 
-            if ($current->hasDefault === false && $field->hasDefault === true && $field->default === null) {
+            if ($key === 'hasDefault'
+                    && $current->hasDefault === false
+                    && $field->hasDefault === true
+                    && $field->default === null) {
                 unset($diff[$key]);
 
                 /** @noinspection PhpUnnecessaryStopStatementInspection */

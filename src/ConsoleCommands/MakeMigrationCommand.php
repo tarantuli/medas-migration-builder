@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace Medas\MigrationBuilder\ConsoleCommands;
 
-use Medas\Console\{Commands\BaseConsoleCommand,
+use Medas\Console\{
+    Commands\BaseConsoleCommand,
     Commands\CommandInput,
     Commands\ConsoleCommandGroup,
     Commands\Option,
     Formats\SafeColor,
     Printer,
-    Text};
-use Medas\Core\{Attributes\ConfigValue,
+    Text
+};
+use Medas\Core\{
+    Attributes\ConfigValue,
     Attributes\Service,
     Interfaces\ImplementorFinder,
     Interfaces\PackageEntities,
-    Interfaces\ServiceManager};
+    Interfaces\ServiceManager
+};
 use Medas\EntityManager\ConfigOptions\EntityDirectories;
 use Medas\MigrationBuilder\{MigrationFactory, MigrationFactory\Settings};
 use Medas\StorageManager\ConfigOptions\MigrationDirectory;
@@ -24,12 +28,14 @@ use Medas\StorageManager\ConfigOptions\MigrationDirectory;
 readonly class MakeMigrationCommand extends BaseConsoleCommand
 {
     public function __construct(
-        private Printer        $consolePrinter,
+        private Printer               $consolePrinter,
+
         #[ConfigValue(EntityDirectories::class)]
-        private array     $entityDirectories,
+        private array                 $entityDirectories,
         private MigrationBuilderGroup $group,
-        #[ConfigValue(MigrationDirectory::class)    ]
-        private string    $migrationDirectory,
+
+        #[ConfigValue(MigrationDirectory::class)]
+        private string                $migrationDirectory,
         private MigrationFactory      $migrationBuildManager,
         private ServiceManager        $serviceManager,
     )
@@ -63,10 +69,7 @@ readonly class MakeMigrationCommand extends BaseConsoleCommand
 
     public function process(CommandInput $input): void
     {
-        $settings = new Settings(
-            $this->entityDirectories,
-            $this->migrationDirectory
-        );
+        $settings = new Settings($this->entityDirectories, $this->migrationDirectory);
 
         if ($input->hasOption('clean')) {
             $settings->ignoreExistingStorage = true;

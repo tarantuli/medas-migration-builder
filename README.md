@@ -105,12 +105,12 @@ readonly class RedisStorageMigrationBuilder implements MigrationBuilder
 **Generating a migration from the console:**
 
 ```bash
-php bin/console migration-builder:make-migration
+php bin/medas migration-builder:make-migration
 # Short alias:
-php bin/console c.migration
+php bin/medas c.migration
 
 # Generate from scratch (ignore current schema):
-php bin/console c.migration --clean
+php bin/medas c.migration --clean
 ```
 
 If a migration is needed, a file like `migrations/Migration20260522120000123456.php` is created. If the schema is already up to date, a "no need to create a migration file" message is printed instead.
@@ -118,5 +118,5 @@ If a migration is needed, a file like `migrations/Migration20260522120000123456.
 **Running migrations** — use `medas-storage-manager`'s migrate command:
 
 ```bash
-php bin/console storage-manager:migrate
+php bin/medas storage-manager:migrate
 ```

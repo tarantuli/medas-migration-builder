@@ -16,9 +16,8 @@ use Medas\Console\{
 use Medas\Core\{
     Attributes\ConfigValue,
     Attributes\Service,
-    Interfaces\ImplementorFinder,
-    Interfaces\PackageEntities,
-    Interfaces\ServiceManager
+    CachedImplementorList,
+    Interfaces\PackageEntities
 };
 use Medas\EntityManager\ConfigOptions\EntityDirectories;
 use Medas\MigrationBuilder\{MigrationFactory, MigrationFactory\Settings};
@@ -27,6 +26,8 @@ use Medas\StorageManager\ConfigOptions\MigrationDirectory;
 #[Service]
 readonly class MakeMigrationCommand extends BaseConsoleCommand
 {
+    private CachedImplementorList $cachedImplementorList;
+
     public function __construct(
         private Printer               $consolePrinter,
 
@@ -37,9 +38,9 @@ readonly class MakeMigrationCommand extends BaseConsoleCommand
         #[ConfigValue(MigrationDirectory::class)]
         private string                $migrationDirectory,
         private MigrationFactory      $migrationBuildManager,
-        private ServiceManager        $serviceManager,
     )
     {
+        $this->cachedImplementorList = new CachedImplementorList(PackageEntities::class);
     }
 
     public function group(): ConsoleCommandGroup
@@ -75,13 +76,13 @@ readonly class MakeMigrationCommand extends BaseConsoleCommand
             $settings->ignoreExistingStorage = true;
         }
 
-        $packagesDefiningEntities
-            = $this->serviceManager->resolve(ImplementorFinder::class)->find(PackageEntities::class);
+        $directoryListers = $this->cachedImplementorList->get();
 
-        foreach ($packagesDefiningEntities as $packageDefiningEntities) {
+        foreach ($directoryListers as $directoryLister) {
+            /** @var PackageEntities $directoryLister */
             $settings->sourceDirectories = array_merge(
                 $settings->sourceDirectories,
-                $packageDefiningEntities->directories()
+                $directoryLister->directories()
             );
         }
 

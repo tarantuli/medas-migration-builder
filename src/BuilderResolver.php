@@ -6,10 +6,9 @@ namespace Medas\MigrationBuilder;
 
 use Medas\Core\{
     Attributes\Service,
+    CachedImplementorList,
     Interfaces\Cache,
-    Interfaces\CacheManager,
-    Interfaces\ImplementorFinder,
-    Interfaces\ServiceManager
+    Interfaces\CacheManager
 };
 use Medas\StorageManager\Interfaces\Storage;
 
@@ -17,13 +16,12 @@ use Medas\StorageManager\Interfaces\Storage;
 readonly class BuilderResolver
 {
     private Cache $cache;
+    private CachedImplementorList $cachedImplementorList;
 
-    public function __construct(
-        private ServiceManager $serviceManager,
-        CacheManager           $cacheManager,
-    )
+    public function __construct(CacheManager $cacheManager)
     {
         $this->cache = $cacheManager->get('memory');
+        $this->cachedImplementorList = new CachedImplementorList(MigrationBuilder::class);
     }
 
     public function for(Storage $storage): MigrationBuilder
@@ -33,7 +31,8 @@ readonly class BuilderResolver
 
     private function find(Storage $storage): MigrationBuilder
     {
-        foreach ($this->serviceManager->resolve(ImplementorFinder::class)->find(MigrationBuilder::class) as $builder) {
+        foreach ($this->cachedImplementorList->get() as $builder) {
+            /** @var MigrationBuilder $builder */
             if ($builder->handles($storage)) {
                 return $builder;
             }

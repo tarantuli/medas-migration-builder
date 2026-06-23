@@ -103,11 +103,12 @@ readonly class EntityBlueprintBuilder
     private function findKeys(EntityBlueprintBuilder\Job $job): void
     {
         foreach ($job->metaData->properties as $property) {
-            if (!$property->isUnique || $property->isIndex) {
-                continue;
+            if ($property->isUnique) {
+                $this->addIndex($job, [$property->name], true);
             }
-
-            $this->addIndex($job, [$property->name], $property->isUnique);
+            elseif ($property->isIndex) {
+                $this->addIndex($job, [$property->name], false);
+            }
         }
 
         foreach ($job->metaData->uniquePropertySets as $propertyNames) {

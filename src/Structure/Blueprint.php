@@ -8,6 +8,7 @@ class Blueprint
 {
     public string|null $name = null;
     public string|null $parent = null;
+    public bool $isMigrationStore = false;
     public bool $storeOriginalClass = false;
     public string $storeRequestingOriginalClassStorage;
     public string $originalEntityClassStorageStrategy;

@@ -91,6 +91,7 @@ readonly class MigrationStoreFileBuilder
         $blueprint = new Structure\Blueprint();
 
         $blueprint->name = $this->migrationsStoreName;
+        $blueprint->isMigrationStore = true;
         $migrationField = new Structure\Blueprint\Field('migration', Type::Text);
         $migratedAtField = new Structure\Blueprint\Field('migratedAt', Type::DateTime);
 

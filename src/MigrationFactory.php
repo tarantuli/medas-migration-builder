@@ -18,18 +18,21 @@ use Medas\StorageManager\{Migrations\Migration, StorageManager, UnitOfWork\UnitO
 readonly class MigrationFactory
 {
     public function __construct(
-        private ActionGatherer                   $actionGatherer,
-        private BuilderResolver                  $builderResolver,
-        private DirectoryCreator                 $directoryCreator,
-        private PhpClassBuilder                  $phpClassBuilder,
-        private StorageManager                   $storageManager,
-        private Structure\EntityBlueprintBuilder $entityBlueprintBuilder,
+        private BuilderResolver                            $builderResolver,
+        private DirectoryCreator                           $directoryCreator,
+        private MigrationFactory\ActionGatherer            $actionGatherer,
+        private MigrationFactory\MigrationStoreFileBuilder $migrationStoreFileBuilder,
+        private PhpClassBuilder                            $phpClassBuilder,
+        private StorageManager                             $storageManager,
+        private Structure\EntityBlueprintBuilder           $entityBlueprintBuilder,
     )
     {
     }
 
     public function createMigration(MigrationFactory\Settings $settings): string|null
     {
+        $this->migrationStoreFileBuilder->ensureFileExists($settings->migrationsDirectory);
+
         $job = $this->createMigrationClassCode($settings);
 
         if ($job->migrationNeeded) {
@@ -112,7 +115,7 @@ readonly class MigrationFactory
     {
         $storage = $this->storageManager->byName($entity->storage);
         $expectedStructure = $this->entityBlueprintBuilder->find($className);
-        $needed = $this->builderResolver->for($storage)
+        $needed = $this->builderResolver->find($storage)
             ->build(
                 $storage,
                 $expectedStructure,

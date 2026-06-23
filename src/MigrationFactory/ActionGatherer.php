@@ -2,21 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Medas\MigrationBuilder;
+namespace Medas\MigrationBuilder\MigrationFactory;
 
 use Medas\Core\{Attributes\Service, Interfaces\FileLoader};
 use Medas\EntityManager\Attributes\Entity;
+use Medas\MigrationBuilder\{BuilderResolver, Structure};
 use Medas\StorageManager\{StorageManager, UnitOfWork\ActionSet};
 
 #[Service]
 readonly class ActionGatherer
 {
     public function __construct(
-        private BuilderResolver                           $builderResolver,
-        private FileLoader                                $fileLoader,
-        private MigrationFactory\StoredEntityDeterminator $storedEntityDeterminator,
-        private StorageManager                            $storageManager,
-        private Structure\EntityBlueprintBuilder          $entityBlueprintBuilder,
+        private BuilderResolver                  $builderResolver,
+        private FileLoader                       $fileLoader,
+        private StorageManager                   $storageManager,
+        private StoredEntityDeterminator         $storedEntityDeterminator,
+        private Structure\EntityBlueprintBuilder $entityBlueprintBuilder,
     )
     {
     }
@@ -61,7 +62,7 @@ readonly class ActionGatherer
     {
         $storage = $this->storageManager->byName($entity->storage);
         $expectedStructure = $this->entityBlueprintBuilder->find($className);
-        $newActions = $this->builderResolver->for($storage)
+        $newActions = $this->builderResolver->find($storage)
             ->buildActions($storage, $expectedStructure);
 
         foreach ($newActions as $action) {

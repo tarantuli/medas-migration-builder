@@ -55,7 +55,7 @@ readonly class LinkingStoreActionBuilder implements ActionBuilderInterface
             ->addIndex($primaryIndex)
             ->addForeignKey($idForeignKey);
 
-        return $this->migrationBuilderManager->for($storage)
+        return $this->migrationBuilderManager->find($storage)
             ->buildActions($storage, $linkStoreBlueprint);
     }
 }

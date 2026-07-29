@@ -13,7 +13,7 @@
   "type": "library",
   "require": {
     "morphp/medas-core": "^4",
-    "morphp/medas-console": "^3",
+    "morphp/medas-console": "^3|^4",
     "morphp/medas-file-builder": "^4",
     "morphp/medas-entity-manager": "^3",
     "morphp/medas-storage-manager": "^4",

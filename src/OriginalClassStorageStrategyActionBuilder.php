@@ -24,12 +24,17 @@ readonly class OriginalClassStorageStrategyActionBuilder
     public function build(
         OriginalClassStorageStrategy $strategy,
         Structure\Blueprint          $blueprint,
-        Storage                      $storage
+        Storage                      $storage,
+        bool                         $ignoreExistingStructure = false
     ): ActionSet
     {
         /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ($strategy instanceof LinkingStore) {
-            return $this->forLinkingStore->buildStoreActions($blueprint, $storage);
+            return $this->forLinkingStore->buildStoreActions(
+                $blueprint,
+                $storage,
+                $ignoreExistingStructure
+            );
         }
 
         throw new Exceptions\UnsupportedStrategy($strategy);

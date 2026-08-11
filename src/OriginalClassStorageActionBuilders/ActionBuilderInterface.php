@@ -9,5 +9,9 @@ use Medas\StorageManager\{Interfaces\Storage, UnitOfWork\ActionSet};
 
 interface ActionBuilderInterface
 {
-    public function buildStoreActions(Blueprint $blueprint, Storage $storage): ActionSet;
+    public function buildStoreActions(
+        Blueprint $blueprint,
+        Storage   $storage,
+        bool      $ignoreExistingStructure = false
+    ): ActionSet;
 }

@@ -47,23 +47,28 @@ readonly class ActionGatherer
         return $entities;
     }
 
-    public function gather(array $directories): ActionSet
+    public function gather(array $directories, bool $ignoreExistingStructure = false): ActionSet
     {
         $actions = new ActionSet();
 
         foreach ($this->scan($directories) as $className => $entity) {
-            $this->processEntity($actions, $className, $entity);
+            $this->processEntity($actions, $className, $entity, $ignoreExistingStructure);
         }
 
         return $actions;
     }
 
-    private function processEntity(ActionSet $actions, string $className, Entity $entity): void
+    private function processEntity(
+        ActionSet $actions,
+        string    $className,
+        Entity    $entity,
+        bool      $ignoreExistingStructure
+    ): void
     {
         $storage = $this->storageManager->byName($entity->storage);
         $expectedStructure = $this->entityBlueprintBuilder->find($className);
         $newActions = $this->builderResolver->find($storage)
-            ->buildActions($storage, $expectedStructure);
+            ->buildActions($storage, $expectedStructure, $ignoreExistingStructure);
 
         foreach ($newActions as $action) {
             $actions[] = $action;

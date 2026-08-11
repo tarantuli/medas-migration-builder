@@ -24,7 +24,11 @@ readonly class LinkingStoreActionBuilder implements ActionBuilderInterface
     {
     }
 
-    public function buildStoreActions(Blueprint $blueprint, Storage $storage): ActionSet
+    public function buildStoreActions(
+        Blueprint $blueprint,
+        Storage   $storage,
+        bool      $ignoreExistingStructure = false
+    ): ActionSet
     {
         $linkStoreBlueprint = new Blueprint();
         $idField = clone $blueprint->primaryIndex()->fields()[0];
@@ -56,6 +60,6 @@ readonly class LinkingStoreActionBuilder implements ActionBuilderInterface
             ->addForeignKey($idForeignKey);
 
         return $this->migrationBuilderManager->find($storage)
-            ->buildActions($storage, $linkStoreBlueprint);
+            ->buildActions($storage, $linkStoreBlueprint, $ignoreExistingStructure);
     }
 }

@@ -5,20 +5,8 @@ declare(strict_types=1);
 namespace Medas\MigrationBuilder\MigrationFactory;
 
 use Medas\Core\{Attributes\ConfigValue, Attributes\Service, Interfaces\DirectoryCreator};
-use Medas\FileBuilder\{
-    PhpClass\MethodDefinition,
-    PhpClass\ParameterDefinition,
-    PhpClass\PhpClassDefinition,
-    PhpClassBuilder
-};
-use Medas\MigrationBuilder\{BuilderResolver, Structure};
-use Medas\StorageManager\{
-    ConfigOptions\MigrationsStoreName,
-    Migrations\Migration,
-    StorageManager,
-    Type,
-    UnitOfWork\UnitOfWork
-};
+use Medas\MigrationBuilder\Structure;
+use Medas\StorageManager\{ConfigOptions\MigrationsStoreName, Type};
 
 #[Service]
 readonly class MigrationStoreFileBuilder
@@ -26,13 +14,11 @@ readonly class MigrationStoreFileBuilder
     private const string MAGIC_CLASS_NAME = 'Migration00000000000000000000';
 
     public function __construct(
-        private BuilderResolver  $builderResolver,
-        private DirectoryCreator $directoryCreator,
-        private PhpClassBuilder  $phpClassBuilder,
-        private StorageManager   $storageManager,
+        private DirectoryCreator          $directoryCreator,
+        private MigrationClassCodeBuilder $migrationClassCodeBuilder,
 
         #[ConfigValue(MigrationsStoreName::class)]
-        private string           $migrationsStoreName,
+        private string                    $migrationsStoreName,
     )
     {
     }
@@ -51,39 +37,10 @@ readonly class MigrationStoreFileBuilder
 
         $this->directoryCreator->create($migrationsDirectory);
 
-        file_put_contents($filePath, $this->buildClassCode());
-    }
-
-    private function buildClassCode(): string
-    {
-        $migrateMethod = new MethodDefinition('migrate');
-
-        $migrateMethod->parameters = [new ParameterDefinition(UnitOfWork::class, 'unitOfWork')];
-        $migrateMethod->returnTypes = ['void'];
-        $migrateMethod->body = '';
-        $undoMethod = new MethodDefinition('undo');
-
-        $undoMethod->parameters = [new ParameterDefinition(UnitOfWork::class, 'unitOfWork')];
-        $undoMethod->returnTypes = ['void'];
-        $undoMethod->body = '';
-        $storage = $this->storageManager->byName();
-        $blueprint = $this->buildBlueprint();
-        $builder = $this->builderResolver->find($storage);
-
-        $builder->build(
-            $storage,
-            $blueprint,
-            $migrateMethod,
-            $undoMethod,
-            ignoreExistingStructure: true
+        file_put_contents(
+            $filePath,
+            $this->migrationClassCodeBuilder->build(self::MAGIC_CLASS_NAME, $this->buildBlueprint())
         );
-
-        $classDefinition = new PhpClassDefinition(self::MAGIC_CLASS_NAME, 'Medas\\Migrations');
-
-        $classDefinition->implements[] = Migration::class;
-        $classDefinition->methods = [$migrateMethod, $undoMethod];
-
-        return $this->phpClassBuilder->build($classDefinition);
     }
 
     private function buildBlueprint(): Structure\Blueprint

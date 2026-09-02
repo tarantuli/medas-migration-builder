@@ -22,6 +22,7 @@ readonly class MigrationFactory
         private DirectoryCreator                           $directoryCreator,
         private MigrationFactory\ActionGatherer            $actionGatherer,
         private MigrationFactory\MigrationStoreFileBuilder $migrationStoreFileBuilder,
+        private MigrationFactory\SequenceStoreFileBuilder  $sequenceStoreFileBuilder,
         private PhpClassBuilder                            $phpClassBuilder,
         private StorageManager                             $storageManager,
         private Structure\EntityBlueprintBuilder           $entityBlueprintBuilder,
@@ -32,6 +33,7 @@ readonly class MigrationFactory
     public function createMigration(MigrationFactory\Settings $settings): string|null
     {
         $this->migrationStoreFileBuilder->ensureFileExists($settings->migrationsDirectory);
+        $this->sequenceStoreFileBuilder->ensureFileExists($settings->migrationsDirectory);
 
         $job = $this->createMigrationClassCode($settings);
 

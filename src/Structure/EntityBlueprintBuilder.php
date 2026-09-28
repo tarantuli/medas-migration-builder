@@ -133,10 +133,14 @@ readonly class EntityBlueprintBuilder
 
     private function findForeignKeys(EntityBlueprintBuilder\Job $job): void
     {
+        $parents = $this->parentStoreFinder->find($job->metaData);
+
         foreach ($job->metaData->properties as $property) {
             $handler = $this->typeHandlerFinder->for($property->type);
 
             if ($foreignKey = $handler->foreignKey($property)) {
+                $foreignKey->store = $parents->getStore($property->reflection->getDeclaringClass()->name);
+
                 $job->blueprint->addForeignKey($foreignKey);
             }
         }

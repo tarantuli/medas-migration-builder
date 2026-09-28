@@ -9,11 +9,12 @@ use Medas\EntityManager\Attributes\Relations\Action;
 class ForeignKey
 {
     public function __construct(
-        public string $field,
-        public string $foreignEntity,
-        public string $foreignField,
-        public Action $onDelete,
-        public Action $onUpdate,
+        public string      $field,
+        public string      $foreignEntity,
+        public string      $foreignField,
+        public Action      $onDelete,
+        public Action      $onUpdate,
+        public string|null $store = null,
     )
     {
     }

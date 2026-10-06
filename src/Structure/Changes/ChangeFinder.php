@@ -25,7 +25,7 @@ readonly class ChangeFinder
     private function checkFields(Job $job): void
     {
         foreach ($job->expected->fields as $field) {
-            if ($field->store !== null && $field->store !== $job->expected->name) {
+            if ($this->isStoredElsewhere($job, $field->store)) {
                 continue;
             }
 
@@ -113,6 +113,17 @@ readonly class ChangeFinder
                 continue;
             }
 
+            // An index over an inherited field belongs to the parent's store, as the
+            // field does - the same rule CreateTableBuilder applies.
+            $hasInheritedField = array_any(
+                $index->fields(),
+                fn(Blueprint\Field $field) => $this->isStoredElsewhere($job, $field->store)
+            );
+
+            if ($hasInheritedField) {
+                continue;
+            }
+
             if (!$job->existing->indexByHash($index->hash())) {
                 $job->changes->addIndexes[] = $index;
                 $job->foundChanges = true;
@@ -123,6 +134,14 @@ readonly class ChangeFinder
     private function checkForeignKeys(Job $job): void
     {
         foreach ($job->expected->foreignKeys as $foreignKey) {
+            // A relation declared on a parent class is a column, and so a constraint,
+            // of the parent's store. Without this, every comparison of a child's
+            // store finds the inherited constraints missing and adds them to a table
+            // that does not have those columns.
+            if ($this->isStoredElsewhere($job, $foreignKey->store)) {
+                continue;
+            }
+
             if ($current = $job->existing->foreignKeyByHash($foreignKey->hash())) {
                 if ($this->areForeignKeysComparable($foreignKey, $current)) {
                     continue;
@@ -136,6 +155,13 @@ readonly class ChangeFinder
 
             $job->foundChanges = true;
         }
+    }
+
+    // Whether something assigned to $store lives outside the store being compared;
+    // null means it has no store of its own and so belongs here.
+    private function isStoredElsewhere(Job $job, string|null $store): bool
+    {
+        return $store !== null && $store !== $job->expected->name;
     }
 
     private function areForeignKeysComparable(Blueprint\ForeignKey $foreignKey, Blueprint\ForeignKey $current): bool

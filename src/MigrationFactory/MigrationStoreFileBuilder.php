@@ -39,11 +39,12 @@ readonly class MigrationStoreFileBuilder
 
         file_put_contents(
             $filePath,
-            $this->migrationClassCodeBuilder->build(self::MAGIC_CLASS_NAME, $this->buildBlueprint())
+            $this->migrationClassCodeBuilder->build(self::MAGIC_CLASS_NAME, $this->blueprint())
         );
     }
 
-    private function buildBlueprint(): Structure\Blueprint
+    // The structure of the migrations' store
+    public function blueprint(): Structure\Blueprint
     {
         $blueprint = new Structure\Blueprint();
 

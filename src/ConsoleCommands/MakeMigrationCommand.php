@@ -13,34 +13,27 @@ use Medas\Console\{
     Printer,
     Text
 };
-use Medas\Core\{
-    Attributes\ConfigValue,
-    Attributes\Service,
-    CachedImplementorList,
-    Interfaces\PackageEntities
+use Medas\Core\Attributes\{ConfigValue, Service};
+use Medas\MigrationBuilder\{
+    MigrationFactory,
+    MigrationFactory\Settings,
+    MigrationFactory\SourceDirectoryFinder
 };
-use Medas\EntityManager\ConfigOptions\EntityDirectories;
-use Medas\MigrationBuilder\{MigrationFactory, MigrationFactory\Settings};
 use Medas\StorageManager\ConfigOptions\MigrationDirectory;
 
 #[Service]
 readonly class MakeMigrationCommand extends BaseConsoleCommand
 {
-    private CachedImplementorList $cachedImplementorList;
-
     public function __construct(
-        private Printer               $consolePrinter,
-
-        #[ConfigValue(EntityDirectories::class)]
-        private array                 $entityDirectories,
         private MigrationBuilderGroup $group,
+        private Printer               $consolePrinter,
 
         #[ConfigValue(MigrationDirectory::class)]
         private string                $migrationDirectory,
         private MigrationFactory      $migrationBuildManager,
+        private SourceDirectoryFinder $sourceDirectoryFinder,
     )
     {
-        $this->cachedImplementorList = new CachedImplementorList(PackageEntities::class);
     }
 
     public function group(): ConsoleCommandGroup
@@ -70,20 +63,10 @@ readonly class MakeMigrationCommand extends BaseConsoleCommand
 
     public function process(CommandInput $input): void
     {
-        $settings = new Settings($this->entityDirectories, $this->migrationDirectory);
+        $settings = new Settings($this->sourceDirectoryFinder->find(), $this->migrationDirectory);
 
         if ($input->hasOption('clean')) {
             $settings->ignoreExistingStorage = true;
-        }
-
-        $directoryListers = $this->cachedImplementorList->get();
-
-        foreach ($directoryListers as $directoryLister) {
-            /** @var PackageEntities $directoryLister */
-            $settings->sourceDirectories = array_merge(
-                $settings->sourceDirectories,
-                $directoryLister->directories()
-            );
         }
 
         $filePath = $this->migrationBuildManager->createMigration($settings);

@@ -16,11 +16,32 @@ Generates PHP migration class files by diffing the expected schema (derived from
 
 If no changes are detected between the blueprint and the current storage state, no migration file is created.
 
-**`Blueprint`** is a description of an entity's complete storage structure: field names, types, nullability, defaults, indices (unique and non-unique), foreign keys, and whether the original class name should be stored (for inheritance). `ChangeFinder` diffs two `Blueprint` instances to determine which fields and indices were added, removed, or modified.
+**`Blueprint`** is a description of an entity's complete storage structure: field names, types, nullability, defaults, indices (unique and non-unique), foreign keys, and whether the original class name should be stored (for inheritance). `ChangeFinder` diffs two `Blueprint` instances to determine which fields, indices and foreign keys a migration should add or change. It is a projection of the full store diff described below.
+
+## Structure diff
+
+`Structure\Diff\StructureDiffer` compares everything the backend expects to find in its storages with what those storages actually contain, and returns a `Structure\Diff\Result\StructureDiff`:
+
+- **stores**: missing, superfluous, changed or equal, per storage
+- **fields**: missing, superfluous, or changed; a change is *compatible* when the backend can live with it (a column that allows a wider range than needed, a boolean kept as an integer) and *incompatible* otherwise
+- **indexes** and **foreign keys**: missing, superfluous, or changed (foreign key actions)
+- **field order** (optional): the smallest set of fields that would have to move, ignoring fields only one side has
+
+Migrations use the same comparison: `ChangeFinder` keeps only what is missing or incompatibly changed (`Structure\Diff\ChangesProjector`).
+
+**What the backend expects** comes from all `Structure\Diff\ExpectedStructureProvider` implementations. This package provides the stores of all stored entities and the migrations and sequences stores. A package that keeps data in a store of its own should implement the interface, otherwise its store shows up as superfluous. Join tables and original class (linking) stores are derived automatically.
+
+**Reading a storage** is driver specific: each driver package implements `Structure\Diff\StructureReader` next to its `MigrationBuilder` (`medas-pdo-mysql-migration-builder`, `medas-pdo-sqlite-migration-builder` and `medas-json-storage-migration-builder` do). Storages without a reader are listed as not compared. JSON stores only know field names and their key, so only those are compared.
+
+Only storages the backend uses are compared, as only those are known.
 
 ## Configuration options
 
 The migration directory and entity directories come from `medas-storage-manager` and `medas-entity-manager` respectively — see those packages for details.
+
+| Option | Default | Description |
+|---|---|---|
+| `migration-builder.ignored-stores` | `[]` | Store name patterns (fnmatch, e.g. `backup_*`) the structure diff never reports as superfluous |
 
 ## Usage
 
@@ -114,6 +135,36 @@ php bin/medas c.migration --clean
 ```
 
 If a migration is needed, a file like `migrations/Migration20260522120000123456.php` is created. If the schema is already up to date, a "no need to create a migration file" message is printed instead.
+
+**Comparing the storages with the backend:**
+
+```bash
+php bin/medas storage-diff
+
+# Also check the field order, only one storage, only some stores:
+php bin/medas storage-diff --order --storage=default --store="order*"
+
+# Hide differences the backend can live with, and fail (exit code 1) on the rest, e.g. in CI:
+php bin/medas storage-diff --only-problems --fail
+
+# Never report these stores as superfluous (on top of the configured ignored-stores):
+php bin/medas storage-diff --ignore="backup_*,tmp_*"
+```
+
+**Using the diff programmatically:**
+
+```php
+use Medas\MigrationBuilder\MigrationFactory\SourceDirectoryFinder;
+use Medas\MigrationBuilder\Structure\Diff\{Result\Status, Settings, StructureDiffer};
+
+$diff = service(StructureDiffer::class)->diff(
+    new Settings(service(SourceDirectoryFinder::class)->find(), checkOrder: true)
+);
+
+foreach ($diff->storesWithStatus(Status::Superfluous) as $store) {
+    echo $store->storageName, '.', $store->name, PHP_EOL;
+}
+```
 
 **Running migrations** — use `medas-storage-manager`'s migrate command:
 

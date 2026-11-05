@@ -39,4 +39,19 @@ readonly class OriginalClassStorageStrategyActionBuilder
 
         throw new Exceptions\UnsupportedStrategy($strategy);
     }
+
+    /**
+     * The structures of the stores the strategy keeps for the given entity blueprint
+     *
+     * @return Structure\Blueprint[]
+     */
+    public function blueprints(OriginalClassStorageStrategy $strategy, Structure\Blueprint $blueprint): array
+    {
+        /** @noinspection PhpConditionAlreadyCheckedInspection */
+        if ($strategy instanceof LinkingStore) {
+            return [$this->forLinkingStore->buildBlueprint($blueprint)];
+        }
+
+        throw new Exceptions\UnsupportedStrategy($strategy);
+    }
 }

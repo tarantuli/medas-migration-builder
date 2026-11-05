@@ -34,7 +34,6 @@ class ChangeFinderTest extends TestCase
     {
         $inherited = new Blueprint\Field('code', Type::Text, self::PARENT_STORE);
         $own = new Blueprint\Field('reference', Type::Text, self::CHILD_STORE);
-
         $expected = $this->childBlueprint();
 
         $expected->addField($inherited)->addField($own);
@@ -63,6 +62,18 @@ class ChangeFinderTest extends TestCase
         self::assertNull(new ChangeFinder()->find($expected, $this->childBlueprint()));
     }
 
+    private function foreignKey(string $field, string $foreignEntity, string $store): Blueprint\ForeignKey
+    {
+        return new Blueprint\ForeignKey(
+            $field,
+            $foreignEntity,
+            'id',
+            Action::Restrict,
+            Action::Cascade,
+            $store
+        );
+    }
+
     private function childBlueprint(): Blueprint
     {
         $blueprint = new Blueprint();
@@ -71,10 +82,5 @@ class ChangeFinderTest extends TestCase
         $blueprint->parent = self::PARENT_STORE;
 
         return $blueprint;
-    }
-
-    private function foreignKey(string $field, string $foreignEntity, string $store): Blueprint\ForeignKey
-    {
-        return new Blueprint\ForeignKey($field, $foreignEntity, 'id', Action::Restrict, Action::Cascade, $store);
     }
 }

@@ -39,7 +39,9 @@ readonly class SequenceStoreFileBuilder
      */
     public function ensureFileExists(string $migrationsDirectory): void
     {
-        if (!$this->generateSequencesStore) {
+        $blueprint = $this->blueprint();
+
+        if ($blueprint === null) {
             return;
         }
 
@@ -53,12 +55,17 @@ readonly class SequenceStoreFileBuilder
 
         file_put_contents(
             $filePath,
-            $this->migrationClassCodeBuilder->build(self::MAGIC_CLASS_NAME, $this->buildBlueprint())
+            $this->migrationClassCodeBuilder->build(self::MAGIC_CLASS_NAME, $blueprint)
         );
     }
 
-    private function buildBlueprint(): Structure\Blueprint
+    // The structure of the sequences' store, null when the app hasn't opted in
+    public function blueprint(): Structure\Blueprint|null
     {
+        if (!$this->generateSequencesStore) {
+            return null;
+        }
+
         $blueprint = new Structure\Blueprint();
 
         $blueprint->name = $this->sequencesStoreName;

@@ -30,6 +30,13 @@ readonly class LinkingStoreActionBuilder implements ActionBuilderInterface
         bool      $ignoreExistingStructure = false
     ): ActionSet
     {
+        return $this->migrationBuilderManager->find($storage)
+            ->buildActions($storage, $this->buildBlueprint($blueprint), $ignoreExistingStructure);
+    }
+
+    // The structure of the linking store for the given entity blueprint
+    public function buildBlueprint(Blueprint $blueprint): Blueprint
+    {
         $linkStoreBlueprint = new Blueprint();
         $idField = clone $blueprint->primaryIndex()->fields()[0];
 
@@ -59,7 +66,6 @@ readonly class LinkingStoreActionBuilder implements ActionBuilderInterface
             ->addIndex($primaryIndex)
             ->addForeignKey($idForeignKey);
 
-        return $this->migrationBuilderManager->find($storage)
-            ->buildActions($storage, $linkStoreBlueprint, $ignoreExistingStructure);
+        return $linkStoreBlueprint;
     }
 }

@@ -73,13 +73,13 @@ readonly class StoreDiffer
     {
         foreach ($expected?->indexes ?? [] as $index) {
             $diff->indexes[] = new Result\IndexDiff(
-                $existing?->indexByHash($index->hash()) ? Result\Status::Equal : Result\Status::Missing,
+                $this->hasIndex($existing, $index) ? Result\Status::Equal : Result\Status::Missing,
                 $index,
             );
         }
 
         foreach ($existing?->indexes ?? [] as $index) {
-            if ($expected?->indexByHash($index->hash()) !== null) {
+            if ($this->hasIndex($expected, $index)) {
                 continue;
             }
 
@@ -89,6 +89,32 @@ readonly class StoreDiffer
 
             $diff->indexes[] = new Result\IndexDiff(Result\Status::Superfluous, $index);
         }
+    }
+
+    // Whether the blueprint has an index over the same fields, of the same kind
+    private function hasIndex(Blueprint|null $blueprint, Blueprint\Index $index): bool
+    {
+        $key = $this->indexKey($index);
+
+        return array_any(
+            $blueprint?->indexes ?? [],
+            fn(Blueprint\Index $candidate) => $this->indexKey($candidate) === $key
+        );
+    }
+
+    // A primary key is unique by definition, whether or not the blueprint says so: entity
+    // blueprints don't, the blueprints read from a database do
+    private function indexKey(Blueprint\Index $index): string
+    {
+        $kind = match (true) {
+            $index->isPrimary => 'primary',
+            $index->isUnique => 'unique',
+            default => 'index',
+        };
+
+        $names = array_map(fn(Blueprint\Field $field) => $field->name, $index->fields());
+
+        return $kind . "\0" . implode("\0", $names);
     }
 
     // Some databases (MySQL) add an index for every foreign key that has none; such an

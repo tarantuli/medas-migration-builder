@@ -22,6 +22,9 @@ readonly class DiffPrinter
 {
     private const string INDENT = '  ';
 
+    // The width of the indent, symbol and name or label in front of the status column
+    private const int PREFIX_WIDTH = 32;
+
     public function __construct(
         private Printer $printer,
     )
@@ -67,10 +70,8 @@ readonly class DiffPrinter
             )
         );
 
-        $width = max([0, ...array_map(fn(Result\StoreDiff $store) => mb_strlen($store->name), $stores)]);
-
         foreach ($stores as $store) {
-            $this->printStore($store, $width, $onlyProblems);
+            $this->printStore($store, $onlyProblems);
         }
 
         $equalCount = count($storage->storesWithStatus(Result\Status::Equal));
@@ -99,7 +100,7 @@ readonly class DiffPrinter
         $this->printer->printEol();
     }
 
-    private function printStore(Result\StoreDiff $store, int $width, bool $onlyProblems): void
+    private function printStore(Result\StoreDiff $store, bool $onlyProblems): void
     {
         [$symbol, $color] = match ($store->status) {
             Result\Status::Missing => ['+',
@@ -110,7 +111,10 @@ readonly class DiffPrinter
         };
 
         $this->printer->printLine(
-            Text::create(self::INDENT . $symbol . ' ' . $this->pad($store->name, $width), $color),
+            Text::create(
+                $this->pad(self::INDENT . $symbol . ' ' . $store->name, self::PREFIX_WIDTH),
+                $color
+            ),
             Text::create('  ' . $this->pad($store->status->value, 11), $color),
             Text::create($store->sources ? '  ' . implode(', ', $store->sources) : '', SafeColor::Gray),
         );
@@ -200,12 +204,10 @@ readonly class DiffPrinter
             ];
         }
 
-        $labelWidth = max([0, ...array_map(fn(array $row) => mb_strlen($row[1]), $rows)]);
-
         foreach ($rows as [$symbol, $label, $status, $details, $color]) {
             $this->printer->printLine(
                 Text::create(
-                    str_repeat(self::INDENT, 3) . $symbol . ' ' . $this->pad($label, $labelWidth),
+                    $this->pad(str_repeat(self::INDENT, 3) . $symbol . ' ' . $label, self::PREFIX_WIDTH),
                     $color
                 ),
                 Text::create('  ' . $this->pad($status, 11), $color),
